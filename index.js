@@ -8,7 +8,9 @@ import configuration from "./knexfile.js";
 const knex = initKnex(configuration);
 const app = express();
 dotenv.config();
-configDotenv.config();
+
+// Use routes
+app.use("/api", customRoutes); 
 
 const { JWT_SECRET_KEY, PORT } = process.env;
 
@@ -38,9 +40,6 @@ function authToken(req, res, next){
     })
 }
 
-
-// Use routes
-app.use("/api", customRoutes); 
 
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
