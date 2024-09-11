@@ -11,6 +11,7 @@ dotenv.config();
 
 // Use routes
 app.use("/api", customRoutes); 
+app.use("/api", googleBookRoutes);
 
 const { JWT_SECRET_KEY, PORT } = process.env;
 
@@ -39,7 +40,6 @@ function authToken(req, res, next){
         next();
     })
 }
-
 
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
