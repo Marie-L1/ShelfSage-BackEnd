@@ -1,27 +1,45 @@
 import express from "express";
 import cors from "cors";
-import knex from "knex";
-import config from "./knexfile.js";
-import "dotenv/config";
-
-const knexDb = knex(config.development);
-
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import bcrypt from "bcrypt";
+import initKnex from "knex";
+import configuration from "./knexfile.js";
+const knex = initKnex(configuration);
 const app = express();
-const { PORT, CORS_ORIGIN } = process.env;
+dotenv.config();
+
+// Use routes
+app.use("/api", customRoutes); 
+app.use("/api", googleBookRoutes);
+
+const { JWT_SECRET_KEY, PORT } = process.env;
 
 app.use(express.json()); 
 app.use(express.static("public")); 
-app.use(cors({ origin: CORS_ORIGIN })); 
+app.use(cors()); 
 
-// Middleware
-app.use((req, res, next) => {
-    req.knexDb = knexDb;
-    next();
-});
+/*
+ * Middleware
+ */
 
-// Use routes
-app.use("/api", warehouseRoutes); 
-app.use("/api", inventoryRoutes); 
+// Custom Middlewar to verify JWT
+function authToken(req, res, next){
+    if (!req.headers.authorization){
+        return res.status(401).json({ message: "No token provided" });
+    }
+    const token = req.headers.authorization.split(" ")[1];
+
+    jwt.verify(token, JWT_SECRET_KEY, (error, decoded) => {
+        if (error){
+            return res.status(500).json({ message: "Token validation failed" });
+        }
+        req.user = decoded;
+        req.email = "";
+        req.timeOfrequest = Date.now();
+        next();
+    })
+}
 
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
