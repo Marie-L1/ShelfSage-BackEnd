@@ -1,10 +1,11 @@
 import express from "express";
-import axios from 'axios';
-import "dotenv/config";import jwt from "jsonwebtoken";
+import axios from "axios";
+import "dotenv/config";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 const router = express.Router();
-const { PORT} = process.env;
+const { PORT, JWT_SECRET_KEY } = process.env;
 
 // Home route
 // app.get("/", (req, res) => {
@@ -67,25 +68,43 @@ app.post("/signup", async (req, res) => {
 
 
 // GET: User's saved books
-router.get("/book/shelf/:userId", async (req, res) => {
+router.get("/books/shelf/:userId", async (req, res) => {
     const { userId } = req.params;
 
     try{
-        const books = await knex("shelf")
-        .join("books", "shelf.bookId", "books.Id")
-        .where("shelf.userId", userId)
-        .select("books.id", "books.title", "books.author", "books.coverImage");
-
-        res.json(books);
+        const userBooks = await knex("user_books").where({ user_id: userId });
+        res.json(userBooks);
 
     }catch(error){
         console.error(error);
         res.status(500).json({ message: "Error saving book" });
     }
-})
+});
 
 // POST: Add books to user's shelf
+router.post("/books/shelf/add", async (req, res) => {
+    const { userId, bookId } = req.body;
+
+    try{
+        addBook = await knex("user_books").insert({ user_id: userId, book_id: bookId });
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({ message: "Error adding book to shelf" });
+    }
+});
 
 // DElETE: Remove books from the user's shelf
+router.delete("/books/shelf/remove", async (req, res) => {
+    const { userId, bookId } = req.body;
+
+    try{
+        const removeBook = await knex("user_books").where({ user_id: userId, book_id: bookId }).del();
+        res.json(removeBook);
+    }catch(error){
+        console.error(error);
+        res.status(500).json({ message: "Error removing book from shelf" });
+    }
+})
 
 // GET: Recommendations
