@@ -66,6 +66,25 @@ app.post("/signup", async (req, res) => {
     }
 })
 
+// DELETE: Delete the user's account
+router.delete("/delete/:userId", async (req, res) => {
+    const { userId } =req.params;
+
+    try{
+        // delete user from user_book table first
+        await knex("user_books").where({user_id: userId, }).del();
+
+        // delete user from the users table
+        await knex("users").where({ id: userId }).del();
+
+        res.json({ message: "User account successfully deleted" });
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({ message: "Error deleting account"});
+    }
+})
+
 
 // GET: User's saved books
 router.get("/books/shelf/:userId", async (req, res) => {
