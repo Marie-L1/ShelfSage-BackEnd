@@ -67,6 +67,22 @@ app.post("/signup", async (req, res) => {
 
 
 // GET: User's saved books
+router.get("/book/shelf/:userId", async (req, res) => {
+    const { userId } = req.params;
+
+    try{
+        const books = await knex("shelf")
+        .join("books", "shelf.bookId", "books.Id")
+        .where("shelf.userId", userId)
+        .select("books.id", "books.title", "books.author", "books.coverImage");
+
+        res.json(books);
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({ message: "Error saving book" });
+    }
+})
 
 // POST: Add books to user's shelf
 
