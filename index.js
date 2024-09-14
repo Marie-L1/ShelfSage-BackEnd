@@ -5,10 +5,10 @@ import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import initKnex from "knex";
 import configuration from "./knexfile.js";
-const knex = initKnex(configuration);
-const app = express();
 dotenv.config();
 
+const knex = initKnex(configuration);
+const app = express();
 // Use routes
 app.use("/api", customRoutes); 
 app.use("/api", googleBookRoutes);
