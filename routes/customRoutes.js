@@ -3,17 +3,28 @@ import axios from "axios";
 import "dotenv/config";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import {authToken} from "../index.js"
 
 const router = express.Router();
-const { PORT, JWT_SECRET_KEY } = process.env;
+const { JWT_SECRET_KEY } = process.env;
 
-// Home route
-// app.get("/", (req, res) => {
-
-// })
+// apply middleware to the routes
+router.get("/user/me", authToken, async (req, res) => {
+    try{
+        const userId = req.user.userId;
+        const user = await knex("users").where({ userId }).first();
+        if(!user){
+            return res.status(404).json({ message: "User not found"})
+        }
+        res.json(user);
+    }catch(error){
+        console.error(error);
+        res.status(500).json({ message: "Error fetching user data"});
+    }
+});
 
 // POST: Login route
-app.post("/login", async (req, res) => {
+router.post("/login", async (req, res) => {
     const { username, password } = req.body;
 
     try{
@@ -47,8 +58,8 @@ app.post("/login", async (req, res) => {
 });
 
 // POST: Signup
-app.post("/signup", async (req, res) => {
-    const { username, password } = req.body;
+router.post("/signup", async (req, res) => {
+    const { username, password, email } = req.body;
 
     try{
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -64,7 +75,7 @@ app.post("/signup", async (req, res) => {
         console.error(error);
         res.status(500).json({ message: "Signup failed"})
     }
-})
+});
 
 // DELETE: Delete the user's account
 router.delete("/delete/:userId", async (req, res) => {
@@ -126,5 +137,8 @@ router.delete("/books/shelf/remove", async (req, res) => {
     }
 })
 
+
 // GET: Recommendations
 
+
+export default router;
