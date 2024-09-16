@@ -136,5 +136,18 @@ router.delete("/books/shelf/remove", async (req, res) => {
     }
 })
 
+// GET: fetch book details
+router.get("/books/details", async (req, res) => {
+    try{
+        const response = await axios.get("");
+        const books = response.data;
+
+        res.json(books);
+    }catch(error){
+        console.error(error);
+        res.status(500).json({ message: "Error fetching book details" });
+    }
+});
+
 // GET: Recommendations
 
