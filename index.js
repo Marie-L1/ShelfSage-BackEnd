@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import initKnex from "knex";
 import configuration from "./knexfile.js";
+import customRoutes from "./routes/customRoutes.js";
+import googleBookRoutes from "./routes/googleBookRoutes.js"
 dotenv.config();
 
 const knex = initKnex(configuration);
@@ -39,7 +41,8 @@ function authToken(req, res, next){
         req.timeOfrequest = Date.now();
         next();
     })
-}
+};
+export {authToken};
 
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
