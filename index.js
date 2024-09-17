@@ -3,14 +3,15 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
-import initKnex from "knex";
-import configuration from "./knexfile.js";
 import customRoutes from "./routes/customRoutes.js";
 import googleBookRoutes from "./routes/googleBookRoutes.js"
+import initKnex from 'knex';
+import configuration from './knexfile.js';
+
+const knex = initKnex(configuration);
 
 dotenv.config();
 
-const knex = initKnex(configuration);
 const app = express();
 
 // middleware
@@ -27,7 +28,7 @@ function authToken(req, res, next){
     }
     const token = req.headers.authorization.split(" ")[1];
 
-    jwt.verify(token, JWT_SECRET_KEY, (error, decoded) => {
+    jwt.verify(token, process.env.JWT_SECRET_KEY, (error, decoded) => {
         if (error){
             return res.status(500).json({ message: "Token validation failed" });
         }
@@ -40,8 +41,8 @@ function authToken(req, res, next){
 export {authToken};
 
 // Use routes
-app.use("/api", customRoutes); 
-app.use("/api", googleBookRoutes);
+app.use("/", customRoutes); 
+app.use("/", googleBookRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);

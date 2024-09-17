@@ -4,9 +4,13 @@ import "dotenv/config";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import {authToken} from "../index.js"
+import initKnex from "knex";
+import configuration from "../knexfile.js";
 
 const router = express.Router();
 const { JWT_SECRET_KEY } = process.env;
+
+const knex = initKnex(configuration);
 
 // apply middleware to the routes
 router.get("/user/me", authToken, async (req, res) => {
@@ -28,20 +32,24 @@ router.post("/login", async (req, res) => {
     const { username, password } = req.body;
 
     try {
+        // Query the user by username
         const user = await knex("users").where({ username: username.toLowerCase() }).first();
+        
         if (!user) {
             return res.status(401).json({ message: "Login failed" });
         }
 
+        // Compare the provided password with the stored hashed password
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (passwordMatch) {
+            // Generate a JWT token
             const token = jwt.sign(
                 {
-                    userId: user.userId,
+                    userId: user.id,  // Use the 'id' column here
                     username: user.username,
                 },
-                JWT_SECRET_KEY,
+                process.env.JWT_SECRET_KEY,
                 { expiresIn: "2h" }
             );
             res.json({ token });
@@ -54,24 +62,35 @@ router.post("/login", async (req, res) => {
     }
 });
 
+
 // POST: Signup
 router.post("/signup", async (req, res) => {
     const { username, password, email } = req.body;
 
     try {
+        console.log("Received signup request:", req.body);
+
+        // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
-        await knex("users").insert({
+        console.log("Hashed password:", hashedPassword);
+        
+        // Insert user into the database
+        const [newUserId] = await knex("users").insert({
             username: username.toLowerCase(),
             email,
-            password: hashedPassword,
+            password: hashedPassword
         });
+        console.log("New user ID:", newUserId);
 
-        res.status(201).json({ message: "User successfully created" });
+        // Respond with a success message
+        res.status(201).json({ message: "User successfully created", userId: newUserId });
+
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Signup failed" });
+        console.error("Signup failed:", error);
+        res.status(500).json({ message: "Signup failed", error: error.message });
     }
 });
+
 
 // DELETE: Delete the user's account
 router.delete("/delete/:userId", async (req, res) => {
