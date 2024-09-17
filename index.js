@@ -1,44 +1,29 @@
 import express from "express";
 import cors from "cors";
+import knex from "knex";
+import config from "./knexfile.js";
+import "dotenv/config";
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
 import bcrypt from "bcrypt";
+import knexConfig from './knexfile.js';
 import customRoutes from "./routes/customRoutes.js";
 import googleBookRoutes from "./routes/googleBookRoutes.js"
-import initKnex from 'knex';
-import configuration from './knexfile.js';
 
-const knex = initKnex(configuration);
-
-dotenv.config();
+// Initialize Knex with the development configuration
+const knexDb = knex(config.development);
 
 const app = express();
+const { PORT, CORS_ORIGIN } = process.env;
 
-// middleware
 app.use(express.json()); 
 app.use(express.static("public")); 
-app.use(cors()); 
+app.use(cors({ origin: CORS_ORIGIN })); 
 
-const { JWT_SECRET_KEY, PORT } = process.env;
-
-// Custom Middlewar to verify JWT
-function authToken(req, res, next){
-    if (!req.headers.authorization){
-        return res.status(401).json({ message: "No token provided" });
-    }
-    const token = req.headers.authorization.split(" ")[1];
-
-    jwt.verify(token, process.env.JWT_SECRET_KEY, (error, decoded) => {
-        if (error){
-            return res.status(403).json({ message: "Token validation failed" });
-        }
-        req.user = decoded;
-        req.email = decoded.email;
-        req.timeOfrequest = Date.now();
-        next();
-    })
-};
-export {authToken};
+// Middleware - attach Knex instance to the req object
+app.use((req, res, next) => {
+    req.knexDb = knexDb;
+    next();
+});
 
 // Use routes
 app.use("/", customRoutes); 
