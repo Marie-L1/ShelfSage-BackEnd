@@ -7,23 +7,18 @@ import initKnex from "knex";
 import configuration from "./knexfile.js";
 import customRoutes from "./routes/customRoutes.js";
 import googleBookRoutes from "./routes/googleBookRoutes.js"
+
 dotenv.config();
 
 const knex = initKnex(configuration);
 const app = express();
-// Use routes
-app.use("/api", customRoutes); 
-app.use("/api", googleBookRoutes);
 
-const { JWT_SECRET_KEY, PORT } = process.env;
-
+// middleware
 app.use(express.json()); 
 app.use(express.static("public")); 
 app.use(cors()); 
 
-/*
- * Middleware
- */
+const { JWT_SECRET_KEY, PORT } = process.env;
 
 // Custom Middlewar to verify JWT
 function authToken(req, res, next){
@@ -43,6 +38,10 @@ function authToken(req, res, next){
     })
 };
 export {authToken};
+
+// Use routes
+app.use("/api", customRoutes); 
+app.use("/api", googleBookRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
