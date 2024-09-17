@@ -15,12 +15,14 @@ router.get("/books/details", async (req, res) => {
                 key: GOOGLE_BOOKS_API_KEY,
             },
         });
-        const books = response.data.item.map(item => ({
+        const books = response.data.items.map(item => ({
             id: item.id, // volume id
             title: item.volumeInfo.title,
             author: item.volumeInfo.author,
             coverImage: item.volumeInfo.imageLinks,
             description: item.volumeInfo.description,
+            genre: item.volumeId.genre,
+            catgeories: item.volumeId.categories,
         }))
 
         res.json(books);
