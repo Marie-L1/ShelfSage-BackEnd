@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 // Custom Middlewar to verify JWT
 function authToken(req, res, next){
@@ -12,7 +13,8 @@ function authToken(req, res, next){
         if (error){
             return res.status(403).json({ message: "Token validation failed" });
         }
-        req.user = decoded;
+        req.id = decoded.id,
+        req.username = decoded.username;
         req.email = decoded.email;
         req.timeOfrequest = Date.now();
         next();

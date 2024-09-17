@@ -1,8 +1,8 @@
-// src/routes/customRoutes.js
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import authToken from '../middleware/authToken.js';
+import knexDb from "../db/knex.js"
 
 const router = express.Router();
 
@@ -10,6 +10,7 @@ const router = express.Router();
 router.get("/user/me", authToken, async (req, res) => {
     try {
         const userId = req.id; 
+        console.log(userId)
         const user = await knexDb("users").where({ id: userId }).first(); 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
