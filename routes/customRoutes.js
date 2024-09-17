@@ -10,16 +10,16 @@ const { JWT_SECRET_KEY } = process.env;
 
 // apply middleware to the routes
 router.get("/user/me", authToken, async (req, res) => {
-    try{
+    try {
         const userId = req.user.userId;
         const user = await knex("users").where({ userId }).first();
-        if(!user){
-            return res.status(404).json({ message: "User not found"})
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
         }
         res.json(user);
-    }catch(error){
+    } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Error fetching user data"});
+        res.status(500).json({ message: "Error fetching user data" });
     }
 });
 
@@ -27,31 +27,28 @@ router.get("/user/me", authToken, async (req, res) => {
 router.post("/login", async (req, res) => {
     const { username, password } = req.body;
 
-    try{
+    try {
         const user = await knex("users").where({ username: username.toLowerCase() }).first();
-        if (!user){
+        if (!user) {
             return res.status(401).json({ message: "Login failed" });
         }
 
-        // compare the hased password with the given password
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (passwordMatch) {
-            // generate token
             const token = jwt.sign(
                 {
                     userId: user.userId,
                     username: user.username,
-                }, JWT_SECRET_KEY,
-                {
-                    expiresIn: "2h",
-                }
+                },
+                JWT_SECRET_KEY,
+                { expiresIn: "2h" }
             );
             res.json({ token });
         } else {
             return res.status(400).json({ message: "Login failed" });
         }
-    }catch(error){
+    } catch (error) {
         console.error(error);
         return res.status(500).json({ message: "Login failed" });
     }
@@ -61,19 +58,18 @@ router.post("/login", async (req, res) => {
 router.post("/signup", async (req, res) => {
     const { username, password, email } = req.body;
 
-    try{
+    try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await knex("user").insert({
+        await knex("users").insert({
             username: username.toLowerCase(),
             email,
             password: hashedPassword,
         });
 
-        res.status(201).json({ message: "User successfully created"})
-
-    }catch(error){
+        res.status(201).json({ message: "User successfully created" });
+    } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Signup failed"})
+        res.status(500).json({ message: "Signup failed" });
     }
 });
 
