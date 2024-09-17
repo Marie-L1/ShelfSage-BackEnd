@@ -30,10 +30,10 @@ function authToken(req, res, next){
 
     jwt.verify(token, process.env.JWT_SECRET_KEY, (error, decoded) => {
         if (error){
-            return res.status(500).json({ message: "Token validation failed" });
+            return res.status(403).json({ message: "Token validation failed" });
         }
         req.user = decoded;
-        req.email = "";
+        req.email = decoded.email;
         req.timeOfrequest = Date.now();
         next();
     })

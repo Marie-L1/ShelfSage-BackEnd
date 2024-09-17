@@ -86,10 +86,27 @@ router.post("/signup", async (req, res) => {
         res.status(201).json({ message: "User successfully created", userId: newUserId });
 
     } catch (error) {
-        console.error("Signup failed:", error);
-        res.status(500).json({ message: "Signup failed", error: error.message });
+        console.error(error);
+        res.status(500).json({ message: "Signup failed" });
     }
 });
+
+// GET: when the user logs in
+router.get("/loggedIn", authToken, (req, res) => {
+    try{
+        return res.status(200).json({ 
+            message: "user is logged in!",
+        user:{
+            id: req.user.userId,
+            username: req.user.username,
+        },
+        timeOfRequest: req.timeOfRequest,
+     });
+    }catch(error){
+        console.error(error);
+        res.status(500).json({ message: "login failed" });
+    }
+})
 
 
 // DELETE: Delete the user's account
