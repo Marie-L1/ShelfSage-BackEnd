@@ -10,12 +10,7 @@ router.get("/books/details", async (req, res) => {
     const query = req.query.q;
 
     try{
-        const response = await axios.get(`${BASE_URL}/volumes`, {
-            params: {
-                q: query,
-                key: GOOGLE_BOOKS_API_KEY,
-            },
-        });
+        const response = await axios.get(`${BASE_URL}/?q=volume&key=${GOOGLE_BOOKS_API_KEY}`);
         const books = response.data.items.map(item => ({
             id: item.id, // volume id
             title: item.volumeInfo.title,
@@ -39,11 +34,7 @@ router.get("/books/:id", async (req, res) => {
     const volumeId = req.params.id;
 
     try{
-        const response = await axios.get(`${BASE_URL}/volumes/${volumeId}`, {
-            params: {
-                key: GOOGLE_BOOKS_API_KEY
-            },
-        });
+        const response = await axios.get(`${BASE_URL}/?q=volume&key=${GOOGLE_BOOKS_API_KEY}`);
         const book = {
             id: response.data.id, // volume id
             title: response.data.volumeInfo.title,
