@@ -60,5 +60,31 @@ router.get("/books/:id", async (req, res) => {
     }
 })
 
+// GET: list of popular books
+router.get("/books/popular", async (req, res)=>{
+    try{
+        const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=popular-books`, {
+            params: {
+                key: GOOGLE_BOOKS_API_KEY,
+            },
+        });
+        // Map response data to your desired format
+        const popularBooks = response.data.items.map(item => ({
+            id: item.id,
+            title: item.volumeInfo.title,
+            author: item.volumeInfo.authors,
+            coverImage: item.volumeInfo.imageLinks,
+            description: item.volumeInfo.description,
+            categories: item.volumeInfo.categories,
+        }));
+
+        res.json(popularBooks);
+
+    }catch(error){
+        console.error(error);
+        res.status(500).json({ message: "Error fetching popular books" });
+    }
+});
+
 
 export default router;
