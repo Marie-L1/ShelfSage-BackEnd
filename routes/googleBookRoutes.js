@@ -37,27 +37,32 @@ router.get("/books/", async (req, res) => {
 });
 
 
-// // GET: get deails of single book by Volume ID
-// router.get("/books/:id", async (req, res) => {
-//     const volumeId = req.params.id;
+// GET: Book details
+router.get("/books/details/:id", async (req, res) => {
+    const { id } = req.params;
 
-//     try{
-//         const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?`);
-//         const books = response.data.items.map(item => ({
-//             id: item.id, // volume id
-//             title: item.volumeInfo.title,
-//             author: item.volumeInfo.author,
-//             coverImage: item.volumeInfo.imageLinks.thumbnail,
-//             description: item.volumeInfo.description,
-//             categories: item.volumeInfo.categories,
-//         }))
-//         res.json(books);
+    try {
+        const response = await axios.get(`https://openlibrary.org/works/${id}.json`, {
+            headers: {
+                'User-Agent': 'ShelfSage/1.0 (mlukowich27@gmail.com)' // Add a User-Agent header
+            }
+        });
+        
+        const details = response.data.docs.map(item => ({
+            id: item.key.replace('/works/', ''), // Extract work ID
+            title: item.title,
+            author: item.author_name,
+            coverImage: item.coverImage,
+            description: item.first_sentence,
+            categories: item.subject,
+        }));
 
-//     }catch(error){
-//         console.error(error);
-//         res.status(500).json({ message: "Error fetching book details" });
-//     }
-// })
+        res.json(details);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error fetching book details" });
+    }
+});
 
 // GET: list of popular books
 router.get("/books/popular", async (req, res) => {
@@ -81,7 +86,7 @@ router.get("/books/popular", async (req, res) => {
             categories: item.subject,
         }));
 
-        res.json(popularBooks); // Send the books data back in the response
+        res.json(popularBooks); 
     } catch (error) {
         console.error('Error fetching popular books:', error.message);
         res.status(500).json({ message: "Error fetching popular books" });

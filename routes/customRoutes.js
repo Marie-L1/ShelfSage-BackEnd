@@ -99,12 +99,17 @@ router.delete("/delete/:id", async (req, res) => {
 });
 
 // GET: User's saved books
-router.get("/books/shelf/:id", async (req, res) => {
+router.get("/books/shelf", async (req, res) => {
     const { id } = req.params;
 
     try {
         const userBooks = await knexDb("user_books").where({ user_id: id });
-        res.json(userBooks);
+        // Fetch additional book details using the book_id -- "Promise.all" makes it faster and efficient
+        const bookDetails = await Promise.all(userBooks.map(async (userBook) => {
+            const bookResponse = await axios.get(`https://openlibrary.org/works/${userBook.book_id}.json`);
+            return bookResponse.data;
+        }));
+        res.json(bookDetails);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error fetching books" });
