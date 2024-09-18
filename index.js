@@ -11,11 +11,11 @@ import googleBookRoutes from "./routes/googleBookRoutes.js"
 const app = express();
 const { PORT, CORS_ORIGIN } = process.env;
 
-const corsOptions = {
-    origin: CORS_ORIGIN, 
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-  };
+// const corsOptions = {
+//     origin: CORS_ORIGIN, 
+//     methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//     allowedHeaders: ['Content-Type', 'Authorization']
+//   };
 
   // Middleware - attach Knex instance to the req object
 app.use((req, res, next) => {
@@ -25,7 +25,7 @@ app.use((req, res, next) => {
 
 app.use(express.json()); 
 app.use(express.static("public")); 
-app.use(cors(corsOptions)); 
+app.use(cors()); 
 
 
 // Use routes
