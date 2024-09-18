@@ -48,7 +48,7 @@ router.get("/books/details/:id", async (req, res) => {
     const { id } = req.params;
 
     try {
-        const response = await axios.get(`https://openlibrary.org/works/${id}.json`, {
+        const response = await axios.get(`https://openlibrary.org/works/${workId}.json`, {
             headers: {
                 'User-Agent': 'ShelfSage/1.0 (mlukowich27@gmail.com)' // Add a User-Agent header
             }
