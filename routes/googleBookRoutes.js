@@ -1,9 +1,15 @@
 import express from 'express';
 import axios from 'axios';
 
+
 const router = express.Router();
- 
-const baseUrl = "https://openlibrary.org/"
+
+// Create the cover image URL based on the cover ID in the API
+function getCoverImageUrl(coverId, size = 'M') {
+    if (!coverId) return null;
+    return `https://covers.openlibrary.org/b/id/${coverId}-${size}.jpg`;
+}
+
 
 // GET: Search for books
 router.get("/books/", async (req, res) => {
@@ -24,7 +30,7 @@ router.get("/books/", async (req, res) => {
             id: item.key.replace('/works/', ''), // Extract work ID
             title: item.title,
             author: item.author_name, 
-            coverImage: item.cover_i, 
+            coverImage: getCoverImageUrl(item.cover_i), 
             description: item.first_sentence,
             categories: item.subject, 
         }));
@@ -52,7 +58,7 @@ router.get("/books/details/:id", async (req, res) => {
             id: item.key.replace('/works/', ''), // Extract work ID
             title: item.title,
             author: item.author_name,
-            coverImage: item.coverImage,
+            coverImage: getCoverImageUrl(item.cover_i),
             description: item.first_sentence,
             categories: item.subject,
         }));
@@ -81,7 +87,7 @@ router.get("/books/popular", async (req, res) => {
             id: item.key.replace('/works/', ''), // Extract work ID
             title: item.title,
             author: item.author_name,
-            coverImage: item.coverImage,
+            coverImage: getCoverImageUrl(item.cover_i),
             description: item.first_sentence,
             categories: item.subject,
         }));
