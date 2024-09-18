@@ -3,13 +3,14 @@ import axios from 'axios';
 
 const router = express.Router();
 const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY; 
+const BASE_URL = "https://www.googleapis.com/books/v1"
 
 // GET: Search for books - for search bar
 router.get("/books/details", async (req, res) => {
     const query = req.query.q;
 
     try{
-        const response = await axios.get(`https://www.googleapis.com/books/v1/volumes`, {
+        const response = await axios.get(`${BASE_URL}/volumes`, {
             params: {
                 q: query,
                 key: GOOGLE_BOOKS_API_KEY,
@@ -38,7 +39,7 @@ router.get("/books/:id", async (req, res) => {
     const volumeId = req.params.id;
 
     try{
-        const response = await axios.get(`https://www.googleapis.com/books/v1/volumes/${volumeId}`, {
+        const response = await axios.get(`${BASE_URL}/volumes/${volumeId}`, {
             params: {
                 key: GOOGLE_BOOKS_API_KEY
             },
@@ -63,21 +64,16 @@ router.get("/books/:id", async (req, res) => {
 // GET: list of popular books
 router.get("/books/popular", async (req, res)=>{
     try{
-        const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=popular-books`, {
-            params: {
-                key: GOOGLE_BOOKS_API_KEY,
-            },
-        });
-        // Map response data to your desired format
+        const response = await axios.get(`${BASE_URL}/?q=popular-books&key=${GOOGLE_BOOKS_API_KEY}`);
+
         const popularBooks = response.data.items.map(item => ({
-            id: item.id,
+            id: item.id, // volume id
             title: item.volumeInfo.title,
-            author: item.volumeInfo.authors,
-            coverImage: item.volumeInfo.imageLinks,
+            authors: item.volumeInfo.authors,
+            coverImage: item.volumeInfo.imageLinks?.thumbnail, // Ensure it exists
             description: item.volumeInfo.description,
             categories: item.volumeInfo.categories,
         }));
-
         res.json(popularBooks);
 
     }catch(error){
