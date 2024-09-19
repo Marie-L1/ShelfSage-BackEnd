@@ -1,6 +1,6 @@
 import express from 'express';
 import axios from 'axios';
-
+// import {getCoverImageUrl} from '../utils/utils';
 
 const router = express.Router();
 
@@ -62,7 +62,7 @@ router.get("/books/popular", async (req, res) => {
         console.log("response data:", response.data)
 
         const popularBooks = response.data.docs.map(item => ({
-            id: item.id, 
+            id: item.key.split('/').pop(), 
             title: item.title,
             author: item.author_name,
             coverImage: getCoverImageUrl(item.cover_i),
@@ -89,7 +89,7 @@ router.get("/books/:id", async (req, res) => {
         });
         
         const details = {
-            id: response.data.key.id, 
+            id: response.data.id, 
             title: response.data.title,
             author: response.data.author_name,
             coverImage: getCoverImageUrl(response.data.cover_id),

@@ -12,16 +12,8 @@ export async function seed() {
   // Inserts seed entries
   await db('user_books').insert([
     {
-      user_id: 1,
-      google_book_id: 'EcekAwAAQBAJ'  // Ensure 'google_book_id' matches your schema
-    },
-    {
-      user_id: 1,
-      google_book_id: 'Su2pDwAAQBAJ'
-    },
-    {
-      user_id: 2,
-      google_book_id: 'Jelk7EMpA7sC'
+      user_id: 11,
+      book_id: 'OL20867W'
     },
   ]);
 }
