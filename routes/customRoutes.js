@@ -101,12 +101,16 @@ router.delete("/delete/:id", async (req, res) => {
 // GET: User's saved books
 router.get("/books/shelf", async (req, res) => {
     try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        const userId = decoded.id; // Extract user ID from token
+
         const userBooks = await knexDb("user_books")
             .join("books", "user_books.book_id", "=", "books.id")
-            .where("user_books.user_id", userId)
+            .where("user_books.user_id", userId) // Use userId from token
             .select("books.id", "books.title", "books.author", "books.cover_image");
 
         res.json(userBooks);
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error fetching books" });
@@ -115,11 +119,14 @@ router.get("/books/shelf", async (req, res) => {
 
 // POST: Add books to user's shelf
 router.post("/books/shelf/add", async (req, res) => {
-    const { userId, bookId } = req.body;
+    const { bookId } = req.body;
 
     try {
-        await knexDb("user_books").insert({ user_id: userId, book_id: bookId });
-        res.status(201).json({ message: "Book added to shelf" });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        const userId = decoded.id; // Extract user ID from token
+
+        await knexDb("user_books").where({ user_id: userId, book_id: bookId }).del();
+        res.json({ message: "Book removed from shelf" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error adding book to shelf" });

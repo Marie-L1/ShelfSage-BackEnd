@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 import customRoutes from "./routes/customRoutes.js";
-import googleBookRoutes from "./routes/googleBookRoutes.js"
+import APIRoutes from "./routes/APIRoutes.js"
 
 const app = express();
 const { PORT, CORS_ORIGIN } = process.env;
@@ -30,7 +30,7 @@ app.use(cors());
 
 // Use routes
 app.use("/", customRoutes); 
-app.use("/", googleBookRoutes);
+app.use("/", APIRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
