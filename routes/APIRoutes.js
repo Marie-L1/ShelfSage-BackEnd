@@ -66,7 +66,7 @@ router.get("/books/popular", async (req, res) => {
             title: item.title,
             author: item.author_name,
             coverImage: getCoverImageUrl(item.cover_i),
-            description: item.first_sentence,
+            description: item.first_sentence[0],
             categories: item.subject,
         }));
 
@@ -74,6 +74,99 @@ router.get("/books/popular", async (req, res) => {
     } catch (error) {
         console.error('Error fetching popular books:', error.message);
         res.status(500).json({ message: "Error fetching popular books" });
+    }
+});
+
+// GET: list of Sara J. Maas books
+router.get("/books/Maas", async (req, res) => {
+    try{
+        const response = await axios.get('https://openlibrary.org/search.json?', {
+            params: {
+                author: 'Maas',
+                limit: 10,
+            },
+            headers: {
+                'User-Agent': 'ShelfSage/1.0 (mlukowich27@gmail.com)'
+            }
+        });
+
+        console.log("response data:", response.data)
+
+        const popularBooks = response.data.docs.map(item => ({
+            id: item.key.split('/').pop(), 
+            title: item.title,
+            author: item.author_name,
+            coverImage: getCoverImageUrl(item.cover_i),
+            description: item.first_sentence[0],
+            categories: item.subject,
+        }));
+
+        res.json(popularBooks); 
+    } catch (error) {
+        console.error('Error fetching Maas books:', error.message);
+        res.status(500).json({ message: "Error fetching Maas's books" });
+    }
+});
+
+// GET: list of Scifibooks
+router.get("/books/scifi", async (req, res) => {
+    try{
+        const response = await axios.get('https://openlibrary.org/search.json?', {
+            params: {
+                q: 'scifi',
+                limit: 10,
+            },
+            headers: {
+                'User-Agent': 'ShelfSage/1.0 (mlukowich27@gmail.com)'
+            }
+        });
+
+        console.log("response data:", response.data)
+
+        const popularBooks = response.data.docs.map(item => ({
+            id: item.key.split('/').pop(), 
+            title: item.title,
+            author: item.author_name,
+            coverImage: getCoverImageUrl(item.cover_i),
+            description: item.first_sentence[0],
+            categories: item.subject,
+        }));
+
+        res.json(popularBooks); 
+    } catch (error) {
+        console.error('Error fetching scifi books:', error.message);
+        res.status(500).json({ message: "Error fetching sci fi books" });
+    }
+});
+
+// GET: list of J.k Rowling books
+router.get("/books/rowling", async (req, res) => {
+    try{
+        const response = await axios.get('https://openlibrary.org/search.json?', {
+            params: {
+                q: 'rowling',
+                limit: 10,
+            },
+            headers: {
+                'User-Agent': 'ShelfSage/1.0 (mlukowich27@gmail.com)'
+            }
+        });
+
+        console.log("response data:", response.data)
+
+        const popularBooks = response.data.docs.map(item => ({
+            id: item.key.split('/').pop(), 
+            title: item.title,
+            author: item.author_name,
+            coverImage: getCoverImageUrl(item.cover_i),
+            description: item.first_sentence[0],
+            categories: item.subject,
+        }));
+
+        res.json(popularBooks); 
+    } catch (error) {
+        console.error('Error fetching non-fiction books:', error.message);
+        res.status(500).json({ message: "Error fetching non-fiction books" });
     }
 });
 
