@@ -141,16 +141,29 @@ router.get("/books/shelf", async (req, res) => {
 
             if (userBooks.length === 0) { return res.status(404).json({ message: "No books found on shelf" }); }
 
-        const bookDetails = await Promise.all (userBooks.map(
-            async (book) => {
-                const response = await axios.get(`https://openlibrary.org/works/${book.book_id}.json`) 
-                // id: item.key.split('/').pop()
-                return {
-                    id: book.book_id,
-                    title: response.data.title, author: response.data.authors.map(author => author.name).join(", "),
-                    coverImage: response.data.cover_i
+            const bookDetails = await Promise.all(userBooks.map(async (book) => {
+                // Validate book ID before making a request
+                if (!book.book_id) {
+                    console.error("Invalid book ID:", book.book_id);
+                    return null; // Skip invalid IDs
                 }
-            }))
+    
+                try {
+                    const response = await axios.get(`https://openlibrary.org/works/${book.book_id}.json`, {
+                        timeout: 5000 // 5 seconds timeout
+                    });
+                    console.log(response.data.covers)
+                    return {
+                        id: book.book_id,
+                        title: response.data.title || "Untitled",
+                        author: response.data.authors ? response.data.authors.map(author => author.name).join(", ") : "Unknown Author",
+                        coverImage: response.data.covers && response.data.covers.length > 0 ? `https://covers.openlibrary.org/b/id/${response.data.covers[0]}-L.jpg` : null
+                    };
+                } catch (error) {
+                    console.error(`Error fetching details for book ID ${book.book_id}:`, error);
+                    return null; // Return null for errors so we can filter later
+                }
+            }));
         // res.json(userBooks);
         res.json(bookDetails)
         
@@ -162,35 +175,38 @@ router.get("/books/shelf", async (req, res) => {
 
 
 router.post("/books/shelf/add", async (req, res) => {
-    const token = req.headers.authorization?.split(" ")[1]; // Extract token from Authorization header
+    const token = req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ message: "No token provided" });
 
-    const { id, bookId } = req.body;
-    // if (!bookId) {return res.status(400).json({ message: "Book ID is required" })};
+    const { book_id } = req.body;
+    if (!book_id) {
+        return res.status(400).json({ message: "Book ID is required" });
+    }
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-        const userId = decoded.id; // Extract user ID from token
+        const userId = decoded.id;
+
+        console.log("Request body:", req.body);
+        console.log("userId:", userId, "bookId:", book_id);
 
         // Check if the book is already on the shelf
         const existingBook = await knexDb("user_books")
-            .where({ user_id: userId, book_id: bookId })
-            // .first();
+            .where({ user_id: userId, book_id: book_id })
+            .first();
 
         if (existingBook) {
             return res.status(400).json({ message: "Book is already on the shelf" });
         }
 
         // Add the book to the user's shelf
-        await knexDb("user_books").insert({ user_id: userId, book_id: bookId });
+        await knexDb("user_books").insert({ user_id: userId, book_id: book_id });
         res.json({ message: "Book added to shelf" });
     } catch (error) {
-        console.error("Error adding book to shelf:", error);
-        res.status(500).json({ message: "Error adding book to shelf" });
+        console.error("Error adding book to shelf:", error.message);
+        res.status(500).json({ message: "Error adding book to shelf", error: error.message });
     }
 });
-
-
 
 // DELETE: Remove books from the user's shelf
 router.delete("/books/shelf/remove", async (req, res) => {
