@@ -106,12 +106,12 @@ router.get("/books/scifi", async (req, res) => {
     }
 });
 
-// GET: list of J.k Rowling books
-router.get("/books/rowling", async (req, res) => {
+// GET: list of Tolkien's books
+router.get("/books/tolkien", async (req, res) => {
     try{
         const response = await axios.get('https://openlibrary.org/search.json?', {
             params: {
-                q: 'rowling',
+                q: 'tolkien',
                 limit: 10,
             },
             headers: {
