@@ -1,33 +1,25 @@
-// initial data for testing
-
+// seeds/seed_user_books.js
 import knex from 'knex';
 import configuration from '../knexfile.js';
 
-const db = knex(configuration);
+// Initialize the database connection
+const db = knex(configuration.development);
 
-export async function seed(knex) {
+export async function seed() {
   // Deletes ALL existing entries
-  await knex('user_books').del();
+  await db('user_books').del();
 
   // Inserts seed entries
-  await knex('user_books').insert([
+  await db('user_books').insert([
     {
-      user_id: 1,
-      book_id: EcekAwAAQBAJ 
-    },
-    {
-      user_id: 1,
-      book_id: Su2pDwAAQBAJ
-    },
-    {
-      user_id: 2,
-      book_id: Jelk7EMpA7sC
+      user_id: 11,
+      book_id: 'OL20867W'
     },
   ]);
 }
 
 // Run the seed function
-seed(db)
+seed()
   .then(() => {
     console.log('User-books seed data inserted');
     process.exit(0);
@@ -36,3 +28,4 @@ seed(db)
     console.error('Error seeding user-books data:', error);
     process.exit(1);
   });
+

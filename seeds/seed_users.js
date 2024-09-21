@@ -1,14 +1,17 @@
-// Testing data
-
+// seeds/seed_users.js
+import knex from 'knex';
+import configuration from '../knexfile.js';
 import bcrypt from 'bcrypt';
-import knex from "../knexfile.js";
 
-export const seed = async function(knex) {
+// Initialize the database connection
+const db = knex(configuration.development);
+
+export async function seed() {
   // Deletes ALL existing entries
-  await knex('users').del();
+  await db('users').del();
 
   // Inserts seed entries
-  await knex('users').insert([
+  await db('users').insert([
     {
       username: 'user1',
       email: 'user1@example.com',
@@ -25,6 +28,15 @@ export const seed = async function(knex) {
       password: await bcrypt.hash('password333', 10),
     },
   ]);
-};
+}
 
-
+// Run the seed function
+seed()
+  .then(() => {
+    console.log('Users seed data inserted');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('Error seeding users data:', error);
+    process.exit(1);
+  });
