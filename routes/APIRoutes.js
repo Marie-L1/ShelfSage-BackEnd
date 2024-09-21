@@ -66,7 +66,7 @@ router.get("/books/popular", async (req, res) => {
             title: item.title,
             author: item.author_name,
             coverImage: getCoverImageUrl(item.cover_i),
-            description: item.first_sentence[0],
+            description: item.first_sentence,
             categories: item.subject,
         }));
 
@@ -97,7 +97,7 @@ router.get("/books/Maas", async (req, res) => {
             title: item.title,
             author: item.author_name,
             coverImage: getCoverImageUrl(item.cover_i),
-            description: item.first_sentence[0],
+            description: item.first_sentence,
             categories: item.subject,
         }));
 
@@ -128,7 +128,7 @@ router.get("/books/scifi", async (req, res) => {
             title: item.title,
             author: item.author_name,
             coverImage: getCoverImageUrl(item.cover_i),
-            description: item.first_sentence[0],
+            description: item.first_sentence,
             categories: item.subject,
         }));
 
@@ -159,7 +159,7 @@ router.get("/books/rowling", async (req, res) => {
             title: item.title,
             author: item.author_name,
             coverImage: getCoverImageUrl(item.cover_i),
-            description: item.first_sentence[0],
+            description: item.first_sentence,
             categories: item.subject,
         }));
 
