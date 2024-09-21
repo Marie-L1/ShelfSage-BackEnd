@@ -8,45 +8,12 @@ const router = express.Router();
 function getCoverImageUrl(coverId, size = 'M') {
     if (!coverId) return null;
     return `https://covers.openlibrary.org/b/id/${coverId}-${size}.jpg`;
-}
-
-// once you get response try to cache response from
-
-// GET: Search for books
-// router.get("/books/", async (req, res) => {
-//     const query = req.query.q;
-    
-//     try {
-//         const response = await axios.get('https://openlibrary.org/search/.json', {
-//             params: {
-//                 q: query,
-//                 limit: 10,
-//             },
-//             headers: {
-//                 'User-Agent': 'ShelfSage/1.0 (mlukowich27@gmail.com)' // Add a User-Agent header
-//             }
-//         });
-
-//         const books = response.data.docs.map(item => ({
-//             id: item.key.replace('/works/', ''), // Extract work ID
-//             title: item.title,
-//             author: item.author_name, 
-//             coverImage: getCoverImageUrl(item.cover_i), 
-//             description: item.first_sentence,
-//             categories: item.subject, 
-//         }));
-
-//         res.json(books); // Send the books data back in the response
-//     } catch (error) {
-//         console.error('Error fetching book details:', error.message);
-//         res.status(500).json({ message: "Error fetching book details" });
-//     }
-// });
+};
 
 //OL20867W
 
 
-// GET: list of popular books
+// GET: list of popular/classic books
 router.get("/books/popular", async (req, res) => {
     try{
         const response = await axios.get('https://openlibrary.org/search.json?', {
@@ -170,6 +137,37 @@ router.get("/books/rowling", async (req, res) => {
     }
 });
 
+// GET: Search for books by user query
+router.get("/books/search", async (req, res) => {
+    const query = req.query.q;
+
+    try {
+        const response = await axios.get('https://openlibrary.org/search.json', {
+            params: {
+                q: query,
+                limit: 10, 
+            },
+            headers: {
+                'User-Agent': 'ShelfSage/1.0 (mlukowich27@gmail.com)' 
+            }
+        });
+
+        const books = response.data.docs.map(item => ({
+            id: item.key.split('/').pop(), 
+            title: item.title,
+            author: item.author_name,
+            coverImage: getCoverImageUrl(item.cover_i),
+            description: item.first_sentence,
+            categories: item.subject,
+        }));
+
+        res.json(books);
+    } catch (error) {
+        console.error('Error fetching book details:', error.message);
+        res.status(500).json({ message: "Error fetching book details" });
+    }
+});
+
 // GET: Book details
 router.get("/books/:id", async (req, res) => {
     const { id } = req.params;
@@ -196,6 +194,8 @@ router.get("/books/:id", async (req, res) => {
         res.status(500).json({ message: "Error fetching book details" });
     }
 });
+
+
 
 
 export default router;
