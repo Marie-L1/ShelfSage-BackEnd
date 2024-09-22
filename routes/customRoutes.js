@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import authToken from '../middleware/authToken.js';
 import knexDb from "../db/knex.js"
 import axios from 'axios';
+const cosineSimilarity = 'cosine-similarity';
 // import {getCoverImageUrl} from '../utils/utils.js';
 
 const router = express.Router();
@@ -174,6 +175,7 @@ router.get("/books/shelf", async (req, res) => {
 });
 
 
+// POST: Add a book to the user's shelf
 router.post("/books/shelf/add", async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ message: "No token provided" });
@@ -220,5 +222,68 @@ router.delete("/books/shelf/remove", async (req, res) => {
         res.status(500).json({ message: "Error removing book from shelf" });
     }
 });
+
+
+// ---RECOMMENTATION ROUTES---
+
+// GET: Recommendation route
+router.get('/recommendations', async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (!token) return res.status(401).json({ message: 'No token provided' });
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        const userId = decoded.id;
+
+        const userBooksData = await userBooks(userId);
+
+        if (!userBooks || userBooks.length === 0) {
+            return res.status(404).json({ message: 'No user books found' });
+        }
+
+        // Collect unique authors from user's saved books
+        const userAuthors = [...new Set(userBooks.map(book => book.author))];
+
+        if (userAuthors.length === 0) {
+            return res.status(404).json({ message: 'No authors found in user books' });
+        }
+
+        // Fetch books from Open Library by author
+        try {
+            const allBooks = [];
+
+            for (const author of userAuthors) {
+                const authorBooksResponse = await axios.get('https://openlibrary.org/search.json', {
+                    params: {
+                        author,
+                        limit: 10
+                    }
+                });
+                allBooks.push(...authorBooksResponse.data.docs);
+            }
+
+            if (allBooks.length === 0) {
+                return res.status(404).json({ message: 'No books found from similar authors' });
+            }
+
+            // Filter out books already saved by the user
+            const filteredRecommendations = allBooks.filter(
+                book => !userBooks.some(userBook => userBook.title === book.title)
+            );
+
+            res.json({ recommendations: filteredRecommendations });
+        } catch (apiError) {
+            console.error('Error fetching from Open Library API:', apiError.message);
+            res.status(500).json({ message: 'Error fetching from Open Library API' });
+        }
+    } catch (error) {
+        console.error('Internal server error:', error.message);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+
+
 
 export default router;
