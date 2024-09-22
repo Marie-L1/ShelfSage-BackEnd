@@ -168,6 +168,40 @@ router.get("/books/search", async (req, res) => {
     }
 });
 
+// GET: Book recommendations -- update after bootcamp
+router.get("/books/recommendations", async (req, res) => {
+    try{
+        const queryTopics = ["modern", "crime", "alien", "action",
+         "romance", "horor", "mystery", "thriller", "adventure", "humor", "poetry"];
+
+        const randomTopic = queryTopics[Math.floor(Math.random() * queryTopics.length)];
+
+        const response = await axios('https://openlibrary.org/search.json', {
+            params: {
+                q: randomTopic,
+                limit: 10,
+            },
+            headers: {
+                'User-Agent': 'ShelfSage/1.0 (mlukowich27@gmail.com)' 
+            }
+        });
+        const books = response.data.docs.map(item => ({
+            id: item.key.split('/').pop(), 
+            title: item.title,
+            author: item.author_name,
+            coverImage: getCoverImageUrl(item.cover_i),
+            description: item.first_sentence,
+            categories: item.subject,
+        }));
+
+        res.json(books);
+
+    }catch(error){
+        console.error('Error fetching recommendations:', error.message);
+        res.status(500).json({ message: "Error fetching recommendations" });
+    }
+})
+
 // GET: Book details
 router.get("/books/:id", async (req, res) => {
     const { id } = req.params;
