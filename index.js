@@ -12,7 +12,7 @@ const app = express();
 const { PORT } = process.env;
 
 
-  // Middleware - attach Knex instance to the req object
+// Middleware - attach Knex instance to the req object
 app.use((req, res, next) => {
     req.knexDb = knexDb;
     next();
