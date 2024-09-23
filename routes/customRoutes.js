@@ -4,15 +4,8 @@ import jwt from 'jsonwebtoken';
 import authToken from '../middleware/authToken.js';
 import knexDb from "../db/knex.js"
 import axios from 'axios';
-// import {getCoverImageUrl} from '../utils/utils.js';
 
 const router = express.Router();
-
-// // Create the cover image URL based on the cover ID in the API
-// function getCoverImageUrl(coverId, size = 'M') {
-//     if (!coverId) return null;
-//     return `https://covers.openlibrary.org/b/id/${coverId}-${size}.jpg`;
-// }
 
 router.get('/user/me', async (req, res) => {
     const token = req.headers.authorization?.split(' ')[1]; // Extract token from header
@@ -135,7 +128,6 @@ router.get("/books/shelf", async (req, res) => {
         const userId = decoded.id; // Extract user ID from token
 
         const userBooks = await knexDb("user_books")
-            // .join("user_books.book_id", "=", "user_books.id")
             .where("user_id", userId) // Use userId from token
             .select("book_id");
 
@@ -173,7 +165,7 @@ router.get("/books/shelf", async (req, res) => {
     }
 });
 
-
+// POST: Add a book to the user's shelf
 router.post("/books/shelf/add", async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ message: "No token provided" });

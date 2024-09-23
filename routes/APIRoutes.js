@@ -1,6 +1,5 @@
 import express from 'express';
 import axios from 'axios';
-// import {getCoverImageUrl} from '../utils/utils';
 
 const router = express.Router();
 
@@ -9,8 +8,6 @@ function getCoverImageUrl(coverId, size = 'M') {
     if (!coverId) return null;
     return `https://covers.openlibrary.org/b/id/${coverId}-${size}.jpg`;
 };
-
-//OL20867W
 
 
 // GET: list of popular/classic books
@@ -200,7 +197,7 @@ router.get("/books/recommendations", async (req, res) => {
         console.error('Error fetching recommendations:', error.message);
         res.status(500).json({ message: "Error fetching recommendations" });
     }
-})
+});
 
 // GET: Book details
 router.get("/books/:id", async (req, res) => {
@@ -228,8 +225,5 @@ router.get("/books/:id", async (req, res) => {
         res.status(500).json({ message: "Error fetching book details" });
     }
 });
-
-
-
 
 export default router;
