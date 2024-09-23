@@ -1,27 +1,30 @@
 import express from "express";
 import cors from "cors";
-import knex from "knex";
-import config from "./knexfile.js";
 import "dotenv/config";
+import knexDb from "./db/knex.js";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
-const knexDb = knex(config.development);
+import customRoutes from "./routes/customRoutes.js";
+import APIRoutes from "./routes/APIRoutes.js"
 
 const app = express();
-const { PORT, CORS_ORIGIN } = process.env;
+const { PORT } = process.env;
 
-app.use(express.json()); 
-app.use(express.static("public")); 
-app.use(cors({ origin: CORS_ORIGIN })); 
 
-// Middleware
+  // Middleware - attach Knex instance to the req object
 app.use((req, res, next) => {
     req.knexDb = knexDb;
     next();
 });
 
+app.use(express.json()); 
+app.use(express.static("public")); 
+app.use(cors()); 
+
 // Use routes
-app.use("/api", warehouseRoutes); 
-app.use("/api", inventoryRoutes); 
+app.use("/", customRoutes); 
+app.use("/", APIRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
