@@ -169,39 +169,62 @@ router.get("/books/search", async (req, res) => {
     }
 });
 
-// GET: Book recommendations -- update after bootcamp
-// router.get("/books/recommendations", async (req, res) => {
-//     try{
-//         const queryTopics = ["modern", "crime", "alien", "action",
-//          "romance", "horor", "mystery", "thriller", "adventure", "humor", "poetry"];
+// GET: Fetch related books based on user's saved books
+router.get("/books/recommendations", async (req, res) => {
+    // console.log("Header received: ", req.headers);
+    const token = req.headers.authorization?.split(" ")[1];
+    // console.log("Token: ", token);
+    if (!token) return res.status(401).json({ message: "No token provided" });
 
-//         const randomTopic = queryTopics[Math.floor(Math.random() * queryTopics.length)];
+    try {
+        // Decode JWT to get user ID
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        const userId = decoded.id;
 
-//         const response = await axios('https://openlibrary.org/search.json', {
-//             params: {
-//                 q: randomTopic,
-//                 limit: 10,
-//             },
-//             headers: {
-//                 'User-Agent': 'ShelfSage/1.0 (mlukowich27@gmail.com)' 
-//             }
-//         });
-//         const books = response.data.docs.map(item => ({
-//             id: item.key.split('/').pop(), 
-//             title: item.title,
-//             author: item.author_name,
-//             coverImage: getCoverImageUrl(item.cover_i),
-//             description: item.first_sentence,
-//             categories: item.subject,
-//         }));
+        // Fetch the user's saved books from the user_books table
+        const userBooks = await knexDb("user_books")
+            .where("user_id", userId)
+            .select("book_id");
 
-//         res.json(books);
+        if (userBooks.length === 0) {
+            return res.status(404).json({ message: "No books found on shelf" });
+        }
 
-//     }catch(error){
-//         console.error('Error fetching recommendations:', error.message);
-//         res.status(500).json({ message: "Error fetching recommendations" });
-//     }
-// });
+        // Get the first saved book ID
+        const firstBookId = userBooks[0].book_id;
+
+        // Fetch details of the first saved book from Open Library API
+        const response = await axios.get(`https://openlibrary.org/works/${firstBookId}.json`);
+
+        const genre = response.data.subjects ? response.data.subjects[0] : null; // First genre
+        const author = response.data.authors ? response.data.authors[0].name : null; // First author
+
+        let relatedBooks = [];
+
+        // Fetch related books by genre if available
+        if (genre) {
+            const genreResponse = await axios.get(`https://openlibrary.org/subjects/${genre}.json`);
+            relatedBooks = genreResponse.data.works;
+        }
+
+        // Fetch related books by author if available
+        if (author) {
+            const authorResponse = await axios.get(`https://openlibrary.org/search.json?author=${author}`);
+            relatedBooks = authorResponse.data.works;
+            relatedBooks = [...relatedBooks, ...authorBooks];
+        }
+
+        // Ensure the books are unique by 'key' (book ID)
+        const uniqueRelatedBooks = Array.from(
+            new Set(relatedBooks.map(book => book.key))
+        ).map(key => relatedBooks.find(book => book.key === key));
+
+        res.json(uniqueRelatedBooks);
+    } catch (error) {
+        console.error("Error fetching related books:", error.message);
+        res.status(500).json({ message: "Error fetching related books", error: error.message });
+    }
+});
 
 // GET: Book details
 router.get("/books/:id", async (req, res) => {
