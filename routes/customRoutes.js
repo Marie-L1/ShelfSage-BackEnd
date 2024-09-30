@@ -213,4 +213,64 @@ router.delete("/books/shelf/remove", async (req, res) => {
     }
 });
 
+
+// GET: Fetch related books based on user's saved books
+router.get("/books/recommendations", async (req, res) => {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ message: "No token provided" });
+
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        const userId = decoded.id;
+
+        console.log("Request body:", req.body);
+        console.log("userId:", userId, "bookId:", book_id);
+
+        // Fetch the user's saved books from the user_books table
+        const userBooks = await knexDb("user_books")
+            .where("user_id", userId) // Use userId from token
+            .select("book_id");
+
+        if (userBooks.length === 0) {
+            return res.status(404).json({ message: "No books found on shelf" });
+        }
+
+        // Get the first saved book ID
+        const firstBookId = userBooks[0].book_id;
+
+        // Fetch details of the first saved book from Open Library API
+        const response = await axios.get(`https://openlibrary.org/works/${firstBookId}.json`);
+
+        // Fetch books related to the genre or author of the first book
+        const genre = response.data.subjects ? response.data.subjects[0] : null; // Get first genre
+        const author = response.data.authors ? response.data.authors[0] : null; // Get first author
+
+        let relatedBooks = [];
+
+        // Fetch related books by genre
+        if (genre) {
+            const genreResponse = await axios.get(`https://openlibrary.org/subjects/${encodeURIComponent(genre)}.json`);
+            relatedBooks = genreResponse.data.works;
+        }
+
+        // Alternatively, fetch related books by author
+        if (author) {
+            const authorResponse = await axios.get(`https://openlibrary.org/search.json?author=${encodeURIComponent(author)}`);
+            const authorBooks = authorResponse.data.docs;
+            relatedBooks = [...relatedBooks, ...authorBooks];
+        }
+
+        // Return unique related books (you may want to refine this further)
+        const uniqueRelatedBooks = Array.from(new Set(relatedBooks.map(book => book.key))).map(key => {
+            return relatedBooks.find(book => book.key === key);
+        });
+
+        res.json(uniqueRelatedBooks);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error fetching related books" });
+    }
+});
+
 export default router;

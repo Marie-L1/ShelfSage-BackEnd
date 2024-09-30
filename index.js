@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 
 import customRoutes from "./routes/customRoutes.js";
 import APIRoutes from "./routes/APIRoutes.js"
+import RecommendatonRoutes from "./routes/RecommendationRoutes.js"
 
 const app = express();
 const { PORT } = process.env;
@@ -25,6 +26,7 @@ app.use(cors());
 // Use routes
 app.use("/", customRoutes); 
 app.use("/", APIRoutes);
+app.use("/", RecommendatonRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
