@@ -51,7 +51,7 @@ router.post("/login", async (req, res) => {
                     username: user.username,
                 },
                 process.env.JWT_SECRET_KEY,
-                { expiresIn: "5h" }
+                { expiresIn: "6h" }
             );
             return res.json({ token });
         } else {
@@ -142,7 +142,7 @@ router.get("/books/shelf", async (req, res) => {
     
                 try {
                     const response = await axios.get(`https://openlibrary.org/works/${book.book_id}.json`, {
-                        timeout: 9000 // 5 seconds timeout
+                        timeout: 9000 // 9 seconds timeout
                     });
                     console.log(response.data.covers)
                     return {
@@ -200,68 +200,78 @@ router.post("/books/shelf/add", async (req, res) => {
     }
 });
 
-// // GET: Fetch related books based on user's saved books
-// router.get("/books/recommendations", async (req, res) => {
-//     console.log("Header received: ", req.headers);
-//     const token = req.headers.authorization?.split(" ")[1];
-//     // console.log("Token: ", token);
-//     if (!token) return res.status(401).json({ message: "No token provided" });
+// GET: Fetch related books based on user's saved books
+router.get("/books/recommendations", async (req, res) => {
+    // console.log("Header received: ", req.headers);
+    const token = req.headers.authorization?.split(" ")[1];
+    // console.log("Token: ", token);
+    if (!token) return res.status(401).json({ message: "No token provided" });
 
-//     try {
-//         // Decode JWT to get user ID
-//         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-//         const userId = decoded.id;
+    try {
+        // Decode JWT to get user ID
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        const userId = decoded.id;
 
-//         // Fetch the user's saved books from the user_books table
-//         const userBooks = await knexDb("user_books")
-//             .where("user_id", userId)
-//             .select("book_id");
+        // Fetch the user's saved books from the user_books table
+        const userBooks = await knexDb("user_books")
+            .where("user_id", userId)
+            .select("book_id");
 
-//         if (userBooks.length === 0) {
-//             return res.status(404).json({ message: "No books found on shelf" });
-//         }
+        if (userBooks.length === 0) {
+            return res.status(404).json({ message: "No books found on shelf" });
+        }
 
-//         // Get the first saved book ID
-//         const firstBookId = userBooks[0].book_id;
+        // Get the first saved book ID
+        const firstBookId = userBooks[0].book_id;
 
-//         // Fetch details of the first saved book from Open Library API
-//         const response = await axios.get(`https://openlibrary.org/works/${firstBookId}.json`);
+        // Fetch details of the first saved book from Open Library API
+        const response = await axios.get(`https://openlibrary.org/works/${firstBookId}.json`);
 
-//         const genre = response.data.subjects ? response.data.subjects[0] : null; // First genre
-//         const author = response.data.authors ? response.data.authors[0].name : null; // First author
+        const genre = response.data.subjects ? response.data.subjects[0] : null; // First genre
+        const author = response.data.authors ? response.data.authors[0].name : null; // First author
 
-//         let relatedBooks = [];
+        let relatedBooks = [];
 
-//         // Fetch related books by genre if available
-//         if (genre) {
-//             const genreResponse = await axios.get(`https://openlibrary.org/subjects/${genre}.json`);
-//             relatedBooks = genreResponse.data.works;
-//         }
+        // Fetch related books by genre if available
+        if (genre) {
+            const genreResponse = await axios.get(`https://openlibrary.org/subjects/${genre}.json`);
+            relatedBooks = await Promise.all(genreResponse.data.works.map(async (work) => {
+                return {
+                    key: work.key,
+                    id: work.id, // Ensure you're using the correct field for ID
+                    title: work.title || "Untitled",
+                    author: work.authors ? work.authors.map(author => author.name).join(", ") : "Unknown Author",
+                    coverImage: work.covers && work.covers.length > 0 ? `https://covers.openlibrary.org/b/id/${work.covers[0]}-L.jpg` : null
+                };
+            }));
+        }
 
-//         // Fetch related books by author if available
-//         if (author) {
-//             const authorResponse = await axios.get(`https://openlibrary.org/search.json?author=${author}`);
-//             const authorBooks = authorResponse.data.docs.map(book => ({
-//                 key: book.key,
-//                 id: book.book_id,
-//                 title: response.data.title || "Untitled",
-//                 author: response.data.authors ? response.data.authors.map(author => author.name).join(", ") : "Unknown Author",
-//                 coverImage: response.data.covers && response.data.covers.length > 0 ? `https://covers.openlibrary.org/b/id/${response.data.covers[0]}-L.jpg` : null
-//             }));
-//             relatedBooks = [...relatedBooks, ...authorBooks];
-//         }
+        // Fetch related books by author if available
+        if (author) {
+            const authorResponse = await axios.get(`https://openlibrary.org/search.json?author=${author}`);
+            const authorBooks = await Promise.all(authorResponse.data.docs.map(async (book) => {
+                return {
+                    key: book.key,
+                    id: book.book_id,
+                    title: book.title || "Untitled",
+                    author: book.authors[0] ? book.authors.map(author => author.name).join(", ") : "Unknown Author",
+                    coverImage: book.covers && book.covers.length > 0 ? `https://covers.openlibrary.org/b/id/${book.covers[0]}-L.jpg` : null
+                };
+            }));
+            relatedBooks = [...relatedBooks, ...authorBooks];
+        }
 
-//         // Ensure the books are unique by 'key' (book ID)
-//         const uniqueRelatedBooks = Array.from(
-//             new Set(relatedBooks.map(book => book.key))
-//         ).map(key => relatedBooks.find(book => book.key === key));
+        // Ensure the books are unique by 'key' (book ID)
+        const uniqueRelatedBooks = Array.from(
+            new Set(relatedBooks.map(book => book.key))
+        ).map(key => relatedBooks.find(book => book.key === key));
 
-//         res.json(uniqueRelatedBooks);
-//     } catch (error) {
-//         console.error("Error fetching related books:", error.message);
-//         res.status(500).json({ message: "Error fetching related books", error: error.message });
-//     }
-// });
+        res.json(uniqueRelatedBooks);
+    } catch (error) {
+        console.error("Error fetching related books:", error.message);
+        res.status(500).json({ message: "Error fetching related books", error: error.message });
+    }
+});
 
 
 export default router;
